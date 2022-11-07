@@ -1,3 +1,4 @@
+-- this takes about 8 hours to run
 CREATE TABLE subreddit_stats_link AS
 SELECT
     playlist_path subreddit,
@@ -49,3 +50,5 @@ FROM
     reddit_posts
 GROUP BY
     subreddit;
+
+-- sqlite-utils rows --csv reddit/submissions.db subreddit_stats_link >~/github/xk/reddit_mining/subreddit_stats_link.csv

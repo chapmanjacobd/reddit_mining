@@ -17,7 +17,7 @@ stats_text
 
 I'm not 100% sure what the `""` subreddit is. The data that those records originate from seem to be mostly spam. Maybe these records are incorrectly articulated programmatic submissions? Because the data is tiny, I've uploaded the full records to this repo under `null_subreddit_*`:
 
-```{sh}
+```{sh eval=FALSE, include=FALSE}
 sqlite-utils ~/lb/reddit/submissions.db 'select * from media where playlist_path is null' --csv > ~/github/xk/reddit_mining/null_subreddit_link.csv
 sqlite-utils ~/lb/reddit/submissions.db 'select * from reddit_posts where playlist_path is null' --csv > ~/github/xk/reddit_mining/null_subreddit_text.csv
 ```
@@ -28,9 +28,9 @@ It seems like a lot of data is user subreddits so I will remove those because:
 2.  they will need to be interpreted differently in any analysis
 3.  I'm not sure how accurate they are because my user subreddit has only one record from four years ago. (Am I shadow banned??? I must be on some list somewhere because I also get 0 likes on bumble. oh well\~\~ The data analysis which [follows](https://youtube.com/watch?v=x8llJbEDA0g) is hopefully more interesting than my well-being)
 
-```{r}
-# fwrite(stats_link[subreddit %like% '^u_'], 'user_stats_link.csv')
-# fwrite(stats_text[subreddit %like% '^u_'], 'user_stats_text.csv')
+```{r eval=FALSE}
+fwrite(stats_link[subreddit %like% '^u_'], 'user_stats_link.csv')
+fwrite(stats_text[subreddit %like% '^u_'], 'user_stats_text.csv')
 fwrite(stats_link[!(subreddit %like% '^u_')], 'subreddit_stats_link.csv')
 fwrite(stats_text[!(subreddit %like% '^u_')], 'subreddit_stats_text.csv')
 ```
