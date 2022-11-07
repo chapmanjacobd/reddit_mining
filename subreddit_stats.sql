@@ -17,7 +17,7 @@ SELECT
     ) count_authors,
     AVG(LENGTH(path)) avg_length,
     AVG(LENGTH(title)) avg_length_title,
-    AVG(upvote_ratio) avg_upvote_ratio,
+    AVG(COALESCE(upvote_ratio, 0)) avg_upvote_ratio,
     AVG(COALESCE(is_over_18, 0)) is_over_18_ratio
 FROM
     media
@@ -43,7 +43,7 @@ SELECT
     ) count_authors,
     AVG(LENGTH(selftext)) avg_length,
     AVG(LENGTH(title)) avg_length_title,
-    AVG(upvote_ratio) avg_upvote_ratio,
+    AVG(COALESCE(upvote_ratio, 0)) avg_upvote_ratio,
     AVG(COALESCE(is_over_18, 0)) is_over_18_ratio
 FROM
     reddit_posts

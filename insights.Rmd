@@ -3,32 +3,23 @@ title: "subreddit insights"
 output: html_notebook
 ---
 
-Today we will look at [subreddits](https://youtu.be/pUncXbXAiV0). The data aggregates loaded here were created by converting pushshift [RS\*.zst](https://files.pushshift.io/reddit/submissions/) data into SQLITE format using the pushshift subcommand of the xklb python package:
-
-```{fish}
-wget -e robots=off -r -k -A zst https://files.pushshift.io/reddit/submissions/
-
-pip install xklb
-
-for f in psaw/files.pushshift.io/reddit/submissions/* 
-    echo "unzstd --memory=2048MB --stdout $f | library pushshift (basename $f).db"
-end | parallel -j4
-
-library merge submissions.db psaw/RS*.db
-
-# This takes several days per step and several terabytes but the end result is a 600 GB SQLITE file
-```
-
-But for this analysis you can get by with downloading the sub-100MB pre-aggregated files in this repo.
+Load data:
 
 ```{r}
 require(data.table)
 
 setwd('/home/xk/github/xk/reddit_mining')
 
-stats_link = fread('zstdcat subreddit_stats_link.csv')
-stats_text = fread('zstdcat subreddit_stats_text.csv')
+stats_link = fread('zstdcat subreddit_stats_link.csv.zst')
+stats_text = fread('zstdcat subreddit_stats_text.csv.zst')
 stats_text
+```
+
+I'm not 100% sure what the `""` subreddit is. The data that those records originate from seem to be mostly spam. Maybe these records are incorrectly articulated programmatic submissions? Because the data is tiny, I've uploaded the full records to this repo under `null_subreddit_*`:
+
+```{sh}
+sqlite-utils ~/lb/reddit/submissions.db 'select * from media where playlist_path is null' --csv > ~/github/xk/reddit_mining/null_subreddit_link.csv
+sqlite-utils ~/lb/reddit/submissions.db 'select * from reddit_posts where playlist_path is null' --csv > ~/github/xk/reddit_mining/null_subreddit_text.csv
 ```
 
 It seems like a lot of data is user subreddits so I will remove those because:
@@ -40,41 +31,67 @@ It seems like a lot of data is user subreddits so I will remove those because:
 ```{r}
 # fwrite(stats_link[subreddit %like% '^u_'], 'user_stats_link.csv')
 # fwrite(stats_text[subreddit %like% '^u_'], 'user_stats_text.csv')
-# 
-# fwrite(stats_link[!(subreddit %like% '^u_')], 'subreddit_stats_link.csv')
-# fwrite(stats_text[!(subreddit %like% '^u_')], 'subreddit_stats_text.csv')
+fwrite(stats_link[!(subreddit %like% '^u_')], 'subreddit_stats_link.csv')
+fwrite(stats_text[!(subreddit %like% '^u_')], 'subreddit_stats_text.csv')
 ```
 
-The first thing that we can see is that about half of all subreddits only have one text post or one link post.
+The first thing that we can see is that about half of all subreddits only one post of either type.
+
+The median subreddit has 3 link posts and 1 text post... although keep in mind that these variables were observed independently--a subreddit has to have at least one link post to show up in the stats_link data and likewise for text posts and stats_text. It seems like it should be okay to compare the values because they are independent variables but maybe it's not okay to combine values like that? I'm not sure. Statisticians, please let me know.
 
 ```{r}
-data.table(sort(table(stats_text$count)))[N>32000]
-data.table(sort(table(stats_link$count)))[N>96000]
+summary(stats_link)
+summary(stats_text)
 ```
 
-But that may only be because some subreddits have only link posts enabled or only text posts enabled. We will need to create a third dataset to evaluate that:
+
+
+
+```{r}
+data.table(sort(table(stats_text$count)))[N > 32000]
+data.table(sort(table(stats_link$count)))[N > 96000]
+```
+
+
+Though that may only be because some subreddits have only "link" posts enabled or only "text" posts enabled. We will need to create a third dataset to evaluate that:
 
 ```{r}
 setkey(stats_link, "subreddit")
 setkey(stats_text, "subreddit")
 stats_both = stats_link[stats_text, nomatch=FALSE]
 
+
+```
+
+Yes, for
+
+```{r}
+
+
 full_outer_join = merge(stats_link, stats_text, all=TRUE)
 stats_uniq = full_outer_join[is.na(stats_link) | is.na(stats_text)]
 rm(full_outer_join)
 gc()
 
-data.table(sort(table(stats_both$count + stats_both$i.count)))[N>96000]
-```
 
-Yes,
-
-```{r}
 
 ```
 
+But, hypothetically, there are a large number of subreddits which people:
+
+1.  Accidentally created
+2.  Created with many plans to promote and encourage activity but for whatever reason they lost momentum or the market didn't exist yet
+3.  Some combination of 1 and 2
+
+Because of this, I feel, for this analysis, I have enough reason to ignore subreddits which have fewer than 20 total posts and fewer than 10 distinct posting users.
+
 ```{r}
-`
+stats_text = stats_text[count >= 20 | author_count >= 10]
+stats_link = stats_link[count >= 20 | author_count >= 10]
+```
+
+```{r}
+
 
 Dl = stats_link[sample(.N, 10000), ]
 Dt = stats_link[sample(.N, 10000), ]
@@ -82,4 +99,19 @@ Dt = stats_link[sample(.N, 10000), ]
 library(DataExplorer)
 plot_density(Dl)
 plot_density(Dt)
+
+
+# These subreddits are similar in average post age so they might be subreddits primarily used by bots or it may just be a statistical happening (a math party).
+
+stats_link[avg_age %in% data.table(sort(table(stats_link$avg_age)))[N>5]$V1]
+
+stats_link[oldest %in% data.table(sort(table(stats_link$oldest)))[N>5]$V1]
+
+
+# Subreddits where people, unusually more than average, edit their text post long after they created it
+
+stats_text[avg_time_to_edit > abs(summary(as.integer(stats_text$avg_time_to_edit))['1st Qu.']) ]
+
+
+
 ```
