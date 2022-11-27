@@ -31,7 +31,7 @@ SELECT
     MIN(time_created) oldest,
     CAST(AVG(time_created) AS INT) avg_age,
     MAX(time_created) latest,
-    CAST(AVG(time_created - NULLIF(time_modified, 0)) AS INT) avg_time_to_edit,
+    CAST(AVG(NULLIF(time_modified, 0) - time_created) AS INT) avg_time_to_edit,
     MIN(score) min_score,
     AVG(score) avg_score,
     MAX(score) max_score,

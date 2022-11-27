@@ -44,7 +44,7 @@ summary(stats_link)
 summary(stats_text)
 ```
 
-
+You can see the count of subreddits which have a low number of submissions like this:
 
 
 ```{r}
@@ -59,46 +59,139 @@ Though that may only be because some subreddits have only "link" posts enabled o
 setkey(stats_link, "subreddit")
 setkey(stats_text, "subreddit")
 stats_both = stats_link[stats_text, nomatch=FALSE]
-
-
+data.table(sort(table(stats_both$count + stats_both$i.count)))[N > 32000]
 ```
 
-Yes, for
+Maybe it explains some of the subreddits but there are still many subreddits which have very few posts.
 
 ```{r}
-
-
 full_outer_join = merge(stats_link, stats_text, all=TRUE)
-stats_uniq = full_outer_join[is.na(stats_link) | is.na(stats_text)]
+stats_antijoin = full_outer_join[is.na(COUNT.x) | is.na(COUNT.y)]
 rm(full_outer_join)
 gc()
 
-
-
+stats_antijoin
 ```
 
-But, hypothetically, there are a large number of subreddits which people:
+So far, we've figured out that there are 1,838,991 subreddits which exist only in one of the 'link' or 'text' datasets and there are 1,786,105 subreddits which exist in both datasets. This is not duplicate data per se, it just means that there are 1,838,991 subreddits which either: a) ONLY have 'link' posts or b) ONLY have 'text' posts; and there are 1,786,105 subreddits which have both 'link' and 'text' posts.
+
+Hypothetically, there are a large number of subreddits which people:
 
 1.  Accidentally created
 2.  Created with many plans to promote and encourage activity but for whatever reason they lost momentum or the market didn't exist yet
 3.  Some combination of 1 and 2
 
-Because of this, I feel, for this analysis, I have enough reason to ignore subreddits which have fewer than 20 total posts and fewer than 10 distinct posting users.
+Because of this, I feel, for this analysis, I have enough reason to ignore subreddits which have fewer than 20 total posts and fewer than 10 distinct posting users:
 
 ```{r}
-stats_text = stats_text[count >= 20 | author_count >= 10]
-stats_link = stats_link[count >= 20 | author_count >= 10]
+stats_text = stats_text[COUNT >= 20 | count_authors >= 10]
+stats_link = stats_link[COUNT >= 20 | count_authors >= 10]
 ```
 
+For the simplicity of this analysis I will also focus on interpreting the results of 'link' and 'text' datasets separately. Rather than try to combine the analysis by using the 'antijoin' and 'both' data tables that we created in the previous step.
+
+
 ```{r}
+rm(stats_antijoin, stats_both)
+```
+
+Now we have a much smaller dataset to work with: 537,221 'link' and 231,080 'text'. Let's transform the data types into something meaningful:
+
+```{r}
+require(lubridate)
+
+stats_link$oldest = as_datetime(stats_link$oldest)
+stats_link$avg_age = as_datetime(stats_link$avg_age)
+stats_link$latest = as_datetime(stats_link$latest)
+
+stats_text$oldest = as_datetime(stats_text$oldest)
+stats_text$avg_age = as_datetime(stats_text$avg_age)
+stats_text$latest = as_datetime(stats_text$latest)
+
+stats_link$avg_time_to_edit = dseconds(stats_link$avg_time_to_edit)
+stats_text$avg_time_to_edit = dseconds(stats_text$avg_time_to_edit)
+```
+
+Unfortunately, it seems like `avg_time_to_edit` is still wrong even after I re-ran the 8 hour long SQL query to re-compute that. Also, I'm not sure what time_modified means for link submissions. It's my understanding that only text posts can be edited, but maybe reddit mods can rename titles of link posts?
+
+```{r}
+summary(stats_text$avg_time_to_edit)
+```
+```{sql}
+@sqlite> select time_modified, time_modified - NULLIF(time_created, 0) from (select * from reddit_posts where ROWID in (select rowid from reddit_posts limit 100 offset 100000)) where time_modified > 0;
+QUERY PLAN
+|--SEARCH reddit_posts USING INTEGER PRIMARY KEY (rowid=?)
+`--LIST SUBQUERY 1
+   `--SCAN reddit_posts
+┌───────────────┬─────────────────────────────────────────┐
+│ time_modified │ time_modified - NULLIF(time_created, 0) │
+├───────────────┼─────────────────────────────────────────┤
+│ 1261173996    │ 3600                                    │
+│ 1261174153    │ 3600                                    │
+│ 1261174163    │ 3600                                    │
+│ 1261174184    │ 3600                                    │
+│ 1261174392    │ 3600                                    │
+│ 1261174497    │ 3600                                    │
+│ 1261174650    │ 3600                                    │
+│ 1261175381    │ 3600                                    │
+│ 1261175580    │ 3600                                    │
+│ 1261175747    │ 3600                                    │
+│ 1261175936    │ 3600                                    │
+│ 1261176163    │ 3600                                    │
+│ 1261176268    │ 3600                                    │
+│ 1261178286    │ 3600                                    │
+│ 1261178640    │ 3600                                    │
+│ 1261178731    │ 3600                                    │
+│ 1261179736    │ 3600                                    │
+│ 1261179887    │ 3600                                    │
+│ 1261180343    │ 3600                                    │
+│ 1261181721    │ 3600                                    │
+│ 1261182220    │ 3600                                    │
+│ 1261182299    │ 3600                                    │
+│ 1261182347    │ 3600                                    │
+└───────────────┴─────────────────────────────────────────┘
+Run Time: real 0.130 user 0.002494 sys 0.059661
+changes:   0   total_changes: 0
+@sqlite> select time_modified, time_modified - NULLIF(time_created, 0) from (select * from reddit_posts where ROWID in (select rowid from reddit_posts limit 100 offset 1000000)) where time_modified > 0;
+QUERY PLAN
+|--SEARCH reddit_posts USING INTEGER PRIMARY KEY (rowid=?)
+`--LIST SUBQUERY 1
+   `--SCAN reddit_posts
+Progress 5356
+Progress 5357
+Progress 5358
+Progress 5359
+┌───────────────┬─────────────────────────────────────────┐
+│ time_modified │ time_modified - NULLIF(time_created, 0) │
+├───────────────┼─────────────────────────────────────────┤
+│ 1             │ -1296786185                             │
+│ 1             │ -1296786154                             │
+│ 1             │ -1296786100                             │
+│ 1             │ -1296786064                             │
+│ 1             │ -1296786033                             │
+│ 1             │ -1296785911                             │
+│ 1             │ -1296785878                             │
+│ 1             │ -1296785728                             │
+│ 1             │ -1296785621                             │
+│ 1             │ -1296785595                             │
+│ 1             │ -1296785523                             │
+└───────────────┴─────────────────────────────────────────┘
+Run Time: real 0.604 user 0.025196 sys 0.402265
+changes:   0   total_changes: 0
+```
 
 
-Dl = stats_link[sample(.N, 10000), ]
-Dt = stats_link[sample(.N, 10000), ]
+Yeah, there's _definitely_ something weird going on and I'm too lazy to figure it out. So even though `avg_time_to_edit` seems like an interesting metric, I will pass the baton to you.
 
-library(DataExplorer)
-plot_density(Dl)
-plot_density(Dt)
+Now for some EDA (exploratory data analysis). Even though we have relatively small data I'm going to sample 10,000 random rows from the data to keep things snappy. I always like to develop hypotheses with an extract of the data and validate that hypothesis again with another extract or with the full data.
+
+```{r}
+SL = stats_link[sample(.N, 10000), ]
+ST = stats_text[sample(.N, 10000), ]
+
+require(DataExplorer)
+plot_density(SL)
+plot_density(ST)
 
 
 # These subreddits are similar in average post age so they might be subreddits primarily used by bots or it may just be a statistical happening (a math party).

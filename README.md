@@ -21,6 +21,13 @@ But for simple analysis you can get by with downloading the sub-100MB pre-aggreg
 1) 'link' for traditional reddit posts.
 2) 'text' posts (aka selftext; which were [introduced in 2008](https://news.ycombinator.com/item?id=20453120)).
 
+I split up the data into two parquet files via [sqlite2parquet](https://github.com/asayers/sqlite2parquet/).
+
+You can query the Parquet files using `octosql`. Depending on the query, `octosql` is usually faster than SQLITE and parquet compresses very well. You may download those parquet files here:
+
+1) [reddit_links.parquet](https://archive.org/details/reddit_links) [87.7G]
+2) [reddit_posts.parquet](https://archive.org/details/reddit_posts) [~134G]
+
 ## Misc
 
 ### user_stats_link.csv
