@@ -15,7 +15,7 @@ stats_text = fread('zstdcat subreddit_stats_text.csv.zst')
 stats_text
 ```
 
-I'm not 100% sure what the `""` subreddit is. The data that those records originate from seem to be mostly spam. Maybe these records are incorrectly articulated programmatic submissions? Because the data is tiny, I've uploaded the full records to this repo under `null_subreddit_*`:
+I'm not 100% sure what the `""` subreddit is. The data that those records originate from seem to be mostly spam. Maybe these records are incorrectly articulated programmatic submissions? Because that data is tiny, I've uploaded the full records to this repo under `null_subreddit_*`:
 
 ```{sh eval=FALSE, include=FALSE}
 sqlite-utils ~/lb/reddit/submissions.db 'select * from media where playlist_path is null' --csv > ~/github/xk/reddit_mining/null_subreddit_link.csv
@@ -62,7 +62,7 @@ stats_both = stats_link[stats_text, nomatch=FALSE]
 data.table(sort(table(stats_both$count + stats_both$i.count)))[N > 32000]
 ```
 
-Maybe it explains some of the subreddits but there are still many subreddits which have very few posts.
+Maybe it explains some of the data but there are still many subreddits which have very few posts.
 
 ```{r}
 full_outer_join = merge(stats_link, stats_text, all=TRUE)
@@ -88,7 +88,7 @@ stats_text = stats_text[COUNT >= 20 | count_authors >= 10]
 stats_link = stats_link[COUNT >= 20 | count_authors >= 10]
 ```
 
-For the simplicity of this analysis I will also focus on interpreting the results of 'link' and 'text' datasets separately. Rather than try to combine the analysis by using the 'antijoin' and 'both' data tables that we created in the previous step.
+For the simplicity of this analysis I will also focus on interpreting the results of 'link' and 'text' datasets separately. Rather than try to combine the analysis by using the 'antijoin' or 'both' data tables that we created in a previous step.
 
 
 ```{r}
@@ -112,12 +112,15 @@ stats_link$avg_time_to_edit = dseconds(stats_link$avg_time_to_edit)
 stats_text$avg_time_to_edit = dseconds(stats_text$avg_time_to_edit)
 ```
 
-Unfortunately, it seems like `avg_time_to_edit` is still wrong even after I re-ran the 8 hour long SQL query to re-compute that. Also, I'm not sure what time_modified means for link submissions. It's my understanding that only text posts can be edited, but maybe reddit mods can rename titles of link posts?
+Unfortunately, it seems like `avg_time_to_edit` is still wrong even after I re-ran the 8 hour long SQL query to re-compute that. I'm not sure what's going on there.
+
+Also, I'm not sure what `time_modified` (of reddit_links.parquet--used to calculate `avg_time_to_edit`) means for link submissions. It's my understanding that only text posts can be edited, but maybe Reddit mods can rename titles of link posts??
 
 ```{r}
 summary(stats_text$avg_time_to_edit)
+summary(stats_link$avg_time_to_edit)
 ```
-```{sql}
+```{sql eval=FALSE, include=FALSE}
 @sqlite> select time_modified, time_modified - NULLIF(time_created, 0) from (select * from reddit_posts where ROWID in (select rowid from reddit_posts limit 100 offset 100000)) where time_modified > 0;
 QUERY PLAN
 |--SEARCH reddit_posts USING INTEGER PRIMARY KEY (rowid=?)
@@ -181,7 +184,7 @@ changes:   0   total_changes: 0
 ```
 
 
-Yeah, there's _definitely_ something weird going on and I'm too lazy to figure it out. So even though `avg_time_to_edit` seems like an interesting metric, I will pass the baton to you.
+Yeah, there's _definitely_ something weird going on and I'm too lazy to figure it out. Still, `avg_time_to_edit` seems like an interesting metric! I pass the baton to you.
 
 Now for some EDA (exploratory data analysis). Even though we have relatively small data I'm going to sample 10,000 random rows from the data to keep things snappy. I always like to develop hypotheses with an extract of the data and validate that hypothesis again with another extract or with the full data.
 
@@ -190,21 +193,173 @@ SL = stats_link[sample(.N, 10000), ]
 ST = stats_text[sample(.N, 10000), ]
 
 require(DataExplorer)
-plot_density(SL)
-plot_density(ST)
+plot_qq(SL)
+plot_qq(ST)
 
+require(esquisse)
+esquisser(SL)
+esquisser(ST)
+
+library(ggplot2)
+
+ggplot(ST) +
+ aes(x = avg_age, y = is_over_18_ratio, size = avg_upvote_ratio) +
+ geom_point(shape = "triangle", 
+ colour = "#FF5700") +
+ hrbrthemes::theme_modern_rc()
+
+ggplot(ST) +
+ aes(x = avg_age, y = is_over_18_ratio, size = avg_upvote_ratio) +
+ geom_point(shape = "triangle", 
+ colour = "#FF5700") +
+ labs(x = "Avg Subreddit Text-Post Age", y = "Over18 Ratio", size = "Avg Upvote Ratio") +
+ hrbrthemes::theme_modern_rc()
+
+ggplot(ST) +
+ aes(x = avg_age, y = is_over_18_ratio, size = COUNT) +
+ geom_point(shape = "triangle", colour = "#FF5700") +
+ labs(x = "Avg Subreddit Text-Post Age", y = "Over18 Ratio") +
+ hrbrthemes::theme_modern_rc()
+
+ggplot(ST) +
+ aes(x = avg_age, y = is_over_18_ratio, size = avg_upvote_ratio) +
+ geom_point(shape = "triangle", 
+ colour = "#FF5700") +
+ labs(x = "Avg Subreddit Text-Post Age", y = "Over18 Ratio") +
+ hrbrthemes::theme_modern_rc()
+
+ggplot(ST) +
+ aes(x = avg_age, y = is_over_18_ratio, size = avg_upvote_ratio) +
+ geom_point(shape = "triangle", 
+ colour = "#FF5700") +
+ labs(x = "Avg Subreddit Text-Post Age", y = "Over18 Ratio") +
+ hrbrthemes::theme_modern_rc()
+
+ggplot(ST) +
+ aes(x = avg_age, y = avg_upvote_ratio) +
+ geom_point(shape = "triangle", size = 0.5, colour = "#FF5700") +
+ labs(x = "Avg Subreddit Text-Post Age", y = "Over18 Ratio") +
+ hrbrthemes::theme_modern_rc()
+
+ST %>%
+ filter(avg_time_to_edit >= 0L & avg_time_to_edit <= 1340000000L | is.na(avg_time_to_edit)) %>%
+ ggplot() +
+ aes(x = avg_age, y = avg_upvote_ratio, size = count_authors) +
+ geom_point(shape = "triangle", 
+ colour = "#FF5700") +
+ labs(x = "Avg Subreddit Text-Post Age") +
+ hrbrthemes::theme_modern_rc()
+```
+
+Now we create some plots. The first thing that I found which was interesting is that it seems like the average link-post title is trending down very slightly over a decade.
+
+```{r}
+require(ggplot2)
+
+ggplot(SL) +
+ aes(x = oldest, y = avg_length_title) +
+ geom_line(size = 0.5, colour = "#0C4C8A") +
+ theme_minimal()
+
+ggplot(SL) +
+ aes(x = latest, y = avg_length_title) +
+ geom_line(size = 0.5, colour = "#0C4C8A") +
+ labs(x = "Subreddit Newest Post", 
+ y = "Avg. Link Post Title Length") +
+ theme_minimal()
+
+ggplot(SL) +
+ aes(x = oldest, y = count_authors) +
+ geom_line(size = 0.5, colour = "#0C4C8A") +
+ labs(x = "Subreddit Oldest Post") +
+ theme_minimal()
+
+```
+
+It also seems that most new subreddits are likely to allow NSFW link-posts.
+
+```{r}
+
+ggplot(SL) +
+ aes(x = avg_age, y = is_over_18_ratio) +
+ geom_line(size = 0.5, colour = "#112446") +
+ labs(x = "Average Subreddit Link Posts Age", 
+ y = "Over 18 ratio") +
+ theme_minimal()
+
+SL %>%
+ filter(is_over_18_ratio >= 0 & is_over_18_ratio <= 0.5) %>%
+ ggplot() +
+ aes(x = avg_age, y = is_over_18_ratio) +
+ geom_line(size = 0.5, colour = "#112446") +
+ labs(x = "Average Subreddit Link Posts Age", 
+ y = "Over 18 ratio") +
+ theme_minimal()
+
+ggplot(SL) +
+ aes(x = avg_age, y = avg_upvote_ratio) +
+ geom_line(size = 0.5, colour = "#112446") +
+ labs(x = "Average Subreddit Link Posts Age", 
+ y = "Over 18 ratio") +
+ theme_minimal()
+library(ggplot2)
+
+```
+
+It seems likely that the upvote ratio calculation changed in 2020:
+
+```{r}
+
+ggplot(SL) +
+ aes(x = oldest, y = avg_upvote_ratio) +
+ geom_line(size = 0.5, colour = "#0C4C8A") +
+ labs(x = "Subreddit's Oldest Post") +
+ theme_minimal()
+
+ggplot(SL) +
+ aes(x = latest, y = avg_upvote_ratio) +
+ geom_line(size = 0.5, colour = "#0C4C8A") +
+ labs(x = "Subreddit's Newest Post", 
+ y = "Avg. Upvote Ratio") +
+ theme_minimal()
+
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r include=FALSE}
 
 # These subreddits are similar in average post age so they might be subreddits primarily used by bots or it may just be a statistical happening (a math party).
 
 stats_link[avg_age %in% data.table(sort(table(stats_link$avg_age)))[N>5]$V1]
-
 stats_link[oldest %in% data.table(sort(table(stats_link$oldest)))[N>5]$V1]
 
 
 # Subreddits where people, unusually more than average, edit their text post long after they created it
 
-stats_text[avg_time_to_edit > abs(summary(as.integer(stats_text$avg_time_to_edit))['1st Qu.']) ]
-
-
-
+stats_text$avg_time_to_edit
 ```
+
