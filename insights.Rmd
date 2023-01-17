@@ -1,6 +1,6 @@
 ---
 title: "subreddit insights"
-output: html_notebook
+output: github_document
 ---
 
 Load data:
@@ -46,7 +46,6 @@ summary(stats_text)
 
 You can see the count of subreddits which have a low number of submissions like this:
 
-
 ```{r}
 data.table(sort(table(stats_text$count)))[N > 32000]
 data.table(sort(table(stats_link$count)))[N > 96000]
@@ -59,7 +58,7 @@ Though that may only be because some subreddits have only "link" posts enabled o
 setkey(stats_link, "subreddit")
 setkey(stats_text, "subreddit")
 stats_both = stats_link[stats_text, nomatch=FALSE]
-data.table(sort(table(stats_both$count + stats_both$i.count)))[N > 32000]
+data.table(sort(table(stats_both$COUNT + stats_both$i.COUNT)))[N > 32000]
 ```
 
 Maybe it explains some of the data but there are still many subreddits which have very few posts.
@@ -84,8 +83,15 @@ Hypothetically, there are a large number of subreddits which people:
 Because of this, I feel, for this analysis, I have enough reason to ignore subreddits which have fewer than 20 total posts and fewer than 10 distinct posting users:
 
 ```{r}
-stats_text = stats_text[COUNT >= 20 | count_authors >= 10]
-stats_link = stats_link[COUNT >= 20 | count_authors >= 10]
+stats_text = stats_text[COUNT >= 600 & count_authors >= 15]
+stats_link = stats_link[COUNT >= 600 & count_authors >= 15]
+```
+
+As well as removing subreddits where there wasn't a lot of upvoting or commenting going on. I'm not sure if there are subreddits where comments are disabled. I imagine that would defeat the point of reddit? But I am assuming that feature does not exist:
+
+```{r}
+stats_text = stats_text[max_score >= 60 & max_comments >= 15]
+stats_link = stats_link[max_score >= 60 & max_comments >= 15]
 ```
 
 For the simplicity of this analysis I will also focus on interpreting the results of 'link' and 'text' datasets separately. Rather than try to combine the analysis by using the 'antijoin' or 'both' data tables that we created in a previous step.
@@ -95,7 +101,7 @@ For the simplicity of this analysis I will also focus on interpreting the result
 rm(stats_antijoin, stats_both)
 ```
 
-Now we have a much smaller dataset to work with: 537,221 'link' and 231,080 'text'. Let's transform the data types into something meaningful:
+Now we have a much smaller dataset to work with. Let's transform the data types into something meaningful:
 
 ```{r}
 require(lubridate)
@@ -186,6 +192,11 @@ changes:   0   total_changes: 0
 
 Yeah, there's _definitely_ something weird going on and I'm too lazy to figure it out. Still, `avg_time_to_edit` seems like an interesting metric! I pass the baton to you.
 
+```{r}
+stats_link[, avg_time_to_edit := NULL]
+stats_text[, avg_time_to_edit := NULL]
+```
+
 Now for some EDA (exploratory data analysis). Even though we have relatively small data I'm going to sample 10,000 random rows from the data to keep things snappy. I always like to develop hypotheses with an extract of the data and validate that hypothesis again with another extract or with the full data.
 
 ```{r}
@@ -195,85 +206,42 @@ ST = stats_text[sample(.N, 10000), ]
 require(DataExplorer)
 plot_qq(SL)
 plot_qq(ST)
+```
 
-require(esquisse)
-esquisser(SL)
-esquisser(ST)
 
-library(ggplot2)
-
-ggplot(ST) +
- aes(x = avg_age, y = is_over_18_ratio, size = avg_upvote_ratio) +
- geom_point(shape = "triangle", 
- colour = "#FF5700") +
- hrbrthemes::theme_modern_rc()
-
-ggplot(ST) +
- aes(x = avg_age, y = is_over_18_ratio, size = avg_upvote_ratio) +
- geom_point(shape = "triangle", 
- colour = "#FF5700") +
- labs(x = "Avg Subreddit Text-Post Age", y = "Over18 Ratio", size = "Avg Upvote Ratio") +
- hrbrthemes::theme_modern_rc()
-
-ggplot(ST) +
- aes(x = avg_age, y = is_over_18_ratio, size = COUNT) +
- geom_point(shape = "triangle", colour = "#FF5700") +
- labs(x = "Avg Subreddit Text-Post Age", y = "Over18 Ratio") +
- hrbrthemes::theme_modern_rc()
-
-ggplot(ST) +
- aes(x = avg_age, y = is_over_18_ratio, size = avg_upvote_ratio) +
- geom_point(shape = "triangle", 
- colour = "#FF5700") +
- labs(x = "Avg Subreddit Text-Post Age", y = "Over18 Ratio") +
- hrbrthemes::theme_modern_rc()
-
-ggplot(ST) +
- aes(x = avg_age, y = is_over_18_ratio, size = avg_upvote_ratio) +
- geom_point(shape = "triangle", 
- colour = "#FF5700") +
- labs(x = "Avg Subreddit Text-Post Age", y = "Over18 Ratio") +
- hrbrthemes::theme_modern_rc()
-
-ggplot(ST) +
- aes(x = avg_age, y = avg_upvote_ratio) +
- geom_point(shape = "triangle", size = 0.5, colour = "#FF5700") +
- labs(x = "Avg Subreddit Text-Post Age", y = "Over18 Ratio") +
- hrbrthemes::theme_modern_rc()
-
-ST %>%
- filter(avg_time_to_edit >= 0L & avg_time_to_edit <= 1340000000L | is.na(avg_time_to_edit)) %>%
- ggplot() +
- aes(x = avg_age, y = avg_upvote_ratio, size = count_authors) +
- geom_point(shape = "triangle", 
- colour = "#FF5700") +
- labs(x = "Avg Subreddit Text-Post Age") +
- hrbrthemes::theme_modern_rc()
+```{r}
+require(ggplot2)
 ```
 
 Now we create some plots. The first thing that I found which was interesting is that it seems like the average link-post title is trending down very slightly over a decade.
 
 ```{r}
-require(ggplot2)
-
 ggplot(SL) +
  aes(x = oldest, y = avg_length_title) +
- geom_line(size = 0.5, colour = "#0C4C8A") +
+ geom_line(size = 0.05, colour = "#0C4C8A") +
+ labs(x = "Subreddit's first link post", 
+ y = "Avg. Title Length") +
  theme_minimal()
+```
+Subreddits die every day (or they switch to text-post only):
 
+```{r}
 ggplot(SL) +
  aes(x = latest, y = avg_length_title) +
- geom_line(size = 0.5, colour = "#0C4C8A") +
- labs(x = "Subreddit Newest Post", 
- y = "Avg. Link Post Title Length") +
+ geom_line(size = 0.05, colour = "#0C4C8A") +
+ labs(x = "Subreddit's most recent link post", 
+ y = "Avg. Title Length") +
  theme_minimal()
+```
 
+Subreddits with highest authorship have been around for a while
+
+```{r}
 ggplot(SL) +
  aes(x = oldest, y = count_authors) +
- geom_line(size = 0.5, colour = "#0C4C8A") +
- labs(x = "Subreddit Oldest Post") +
+ geom_line(size = 0.3, colour = "#0C4C8A") +
+ labs(x = "Subreddit's first link post", y = "Count of authors") +
  theme_minimal()
-
 ```
 
 It also seems that most new subreddits are likely to allow NSFW link-posts.
@@ -282,73 +250,70 @@ It also seems that most new subreddits are likely to allow NSFW link-posts.
 
 ggplot(SL) +
  aes(x = avg_age, y = is_over_18_ratio) +
- geom_line(size = 0.5, colour = "#112446") +
+ geom_line(size = 0.05, colour = "#112446") +
  labs(x = "Average Subreddit Link Posts Age", 
  y = "Over 18 ratio") +
  theme_minimal()
-
-SL %>%
- filter(is_over_18_ratio >= 0 & is_over_18_ratio <= 0.5) %>%
- ggplot() +
- aes(x = avg_age, y = is_over_18_ratio) +
- geom_line(size = 0.5, colour = "#112446") +
- labs(x = "Average Subreddit Link Posts Age", 
- y = "Over 18 ratio") +
- theme_minimal()
-
-ggplot(SL) +
- aes(x = avg_age, y = avg_upvote_ratio) +
- geom_line(size = 0.5, colour = "#112446") +
- labs(x = "Average Subreddit Link Posts Age", 
- y = "Over 18 ratio") +
- theme_minimal()
-library(ggplot2)
-
 ```
 
-It seems likely that the upvote ratio calculation changed in 2020:
+I'm bad at stats and graphs. I think it might be more interesting if I try to sort both and create a comprehensive list somehow, then find some interesting subreddits to note so more people are aware of them; but I don't have time to go through 100,000 subreddits (unless some rich patron wants to donate a small fortune).
+
+It's obvious that some subreddits are saturated with new posts. AskReddit, for example, has three times the number of link posts as the second highest, a subreddit called "TalkativePeople" which I've never heard of ?!. I feel that I am somewhat like a subreddit connoisseur but I'm surprised by just how many subreddits there actually are.
+
+I think number of posts should be part of the sorting. Also, sorting by most recent post will help weed out the recently banned or abandoned subreddits.
+
+### Out of millions of subreddits, these are the top 50,000 link post subreddits:
 
 ```{r}
-
-ggplot(SL) +
- aes(x = oldest, y = avg_upvote_ratio) +
- geom_line(size = 0.5, colour = "#0C4C8A") +
- labs(x = "Subreddit's Oldest Post") +
- theme_minimal()
-
-ggplot(SL) +
- aes(x = latest, y = avg_upvote_ratio) +
- geom_line(size = 0.5, colour = "#0C4C8A") +
- labs(x = "Subreddit's Newest Post", 
- y = "Avg. Upvote Ratio") +
- theme_minimal()
-
-
+S = stats_link[order(-cut(count_authors, 300), cut(avg_age, 2), -cut(latest, 2), -cut(max_comments, 30), -cut(COUNT, 200), -cut(avg_comments, 30))]
+fwrite(S, file = 'top_link_subreddits.csv')
+S
 ```
+
+### Top 20,000 text post subreddits
 
 ```{r}
-
+S = stats_text[order(-cut(count_authors, 300), cut(avg_age, 2), -cut(latest, 2), -cut(avg_comments, 30),  -cut(COUNT, 50), -cut(max_comments, 30))]
+fwrite(S, file = 'top_text_subreddits.csv')
+S
 ```
+
+### Subreddits with long link post titles
 
 ```{r}
-
+S = stats_link[order(-cut(avg_length_title, 300), -cut(avg_length, 30), -cut(COUNT, 20), -cut(avg_comments, 30), -cut(latest, 2), cut(avg_age, 2))]
+fwrite(S, file = 'long_link_subreddits.csv')
+S
 ```
+
+### Subreddits with long text posts:
 
 ```{r}
-
+S = stats_text[order(-cut(avg_length, 6), -cut(COUNT, 20), -cut(avg_comments, 30), -cut(latest, 2), cut(avg_age, 2))]
+fwrite(S, file = 'long_text_subreddits.csv')
+S
 ```
+
+### Top NSFW link subreddits:
 
 ```{r}
-
+S = stats_link[order(-cut(latest, 4), -cut(is_over_18_ratio, 2), -cut(max_score, 12), -cut(count_authors, 15), cut(avg_score, 20), -cut(COUNT, 20), -cut(max_comments, 100) )]
+fwrite(S, file = 'nsfw_link_subreddits.csv')
+S
 ```
+
+### Top NSFW text subreddits:
 
 ```{r}
-
+S = stats_text[order(-cut(latest, 4), -cut(is_over_18_ratio, 2), -cut(max_score, 12), -cut(count_authors, 15), cut(avg_score, 20), -cut(COUNT, 20), -cut(max_comments, 100) )]
+fwrite(S, file = 'nsfw_text_subreddits.csv')
+S
 ```
 
-```{r}
+Most surprising subreddits that I discovered while writing this:
 
-```
+- /r/WomenFartStories
+
 
 ```{r include=FALSE}
 

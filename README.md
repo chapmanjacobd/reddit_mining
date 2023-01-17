@@ -1,5 +1,13 @@
 # reddit_mining
 
+## Downloads
+
+The most interesting files are likely going to be [top_link_subreddits.csv](./top_link_subreddits.csv) and [top_text_subreddits.csv](./top_text_subreddits.csv).
+
+The files starting with long_* and nsfw_* contain the same data -- they are just sorted differently. Check [insights.md](./insights.md) for more details.
+
+## How was this made?
+
 Today we will look at [subreddits](https://youtu.be/pUncXbXAiV0). The data aggregates loaded here were created by converting pushshift [RS\*.zst](https://files.pushshift.io/reddit/submissions/) data into SQLITE format using the pushshift subcommand of the [xklb](https://github.com/chapmanjacobd/library) python package:
 
 ```fish
