@@ -314,6 +314,10 @@ Most surprising subreddits that I discovered while writing this:
 
 - /r/WomenFartStories
 
+## Downloads
+
+You can download the sorted CSVs here: [https://github.com/chapmanjacobd/reddit_mining/tree/main#downloads](https://github.com/chapmanjacobd/reddit_mining/tree/main#downloads)
+
 
 ```{r include=FALSE}
 

@@ -250,8 +250,8 @@ gc()
 ```
 
     ##             used   (Mb) gc trigger   (Mb)  max used   (Mb)
-    ## Ncells   4239655  226.5    8220537  439.1   4367594  233.3
-    ## Vcells 200026849 1526.1  394770494 3011.9 389090159 2968.6
+    ## Ncells   4239657  226.5    8219801  439.0   4367596  233.3
+    ## Vcells 200026909 1526.1  394770566 3011.9 389090219 2968.6
 
 ``` r
 stats_antijoin
@@ -495,9 +495,9 @@ require(DataExplorer)
 plot_qq(SL)
 ```
 
-    ## Warning: Removed 31 rows containing non-finite values (`stat_qq()`).
+    ## Warning: Removed 25 rows containing non-finite values (`stat_qq()`).
 
-    ## Warning: Removed 31 rows containing non-finite values (`stat_qq_line()`).
+    ## Warning: Removed 25 rows containing non-finite values (`stat_qq_line()`).
 
 ![](insights_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->![](insights_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
 
@@ -505,9 +505,9 @@ plot_qq(SL)
 plot_qq(ST)
 ```
 
-    ## Warning: Removed 53 rows containing non-finite values (`stat_qq()`).
+    ## Warning: Removed 44 rows containing non-finite values (`stat_qq()`).
 
-    ## Warning: Removed 53 rows containing non-finite values (`stat_qq_line()`).
+    ## Warning: Removed 44 rows containing non-finite values (`stat_qq_line()`).
 
 ![](insights_files/figure-gfm/unnamed-chunk-15-3.png)<!-- -->![](insights_files/figure-gfm/unnamed-chunk-15-4.png)<!-- -->
 
@@ -934,3 +934,8 @@ S
 Most surprising subreddits that I discovered while writing this:
 
 -   /r/WomenFartStories
+
+## Downloads
+
+You can download the sorted CSVs here:
+<https://github.com/chapmanjacobd/reddit_mining/tree/main#downloads>
