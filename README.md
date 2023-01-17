@@ -1,6 +1,8 @@
 # reddit_mining
 
-## Downloads
+## List of Subreddits
+
+### Downloads
 
 The most interesting files are likely going to be [top_link_subreddits.csv](./top_link_subreddits.csv) and [top_text_subreddits.csv](./top_text_subreddits.csv).
 
