@@ -20,21 +20,21 @@ for f in psaw/files.pushshift.io/reddit/submissions/*
 end | parallel -j4
 
 library merge submissions.db psaw/RS*.db
-
-# This takes several days per step and several terabytes but the end result is a 600 GB SQLITE file
 ```
 
-But for simple analysis you can get by with downloading the sub-100MB pre-aggregated files in this repo. For the sake of simplicity, speed, the platonic ideal of clearly defining experimental variables, and because SQLITE does not support FULL OUTER JOINs in the version of Fedora that I use, I have separated the aggregations based on the type of post into two files:
-
-1) 'link' for traditional reddit posts.
-2) 'text' posts (aka selftext; which were [introduced in 2008](https://news.ycombinator.com/item?id=20453120)).
+This takes several days per step (and several terabytes of free space) but the end result is a 600 GB SQLITE file. You can save some disk space by downloading the parquet files below.
 
 I split up the data into two parquet files via [sqlite2parquet](https://github.com/asayers/sqlite2parquet/).
 
-You can query the Parquet files using `octosql`. Depending on the query, `octosql` is usually faster than SQLITE and parquet compresses very well. You may download those parquet files here:
+Query the Parquet files using `octosql`. Depending on the query, `octosql` is usually faster than SQLITE and parquet compresses very well. You may download those parquet files here:
 
 1) [reddit_links.parquet](https://archive.org/details/reddit_links) [87.7G]
 2) [reddit_posts.parquet](https://archive.org/details/reddit_posts) [~134G]
+
+Additionally, for simple analysis you can get by with downloading the sub-100MB pre-aggregated files in this repo. For the sake of speed, the ideal of having clearly defined experimental variables, I have bifurcated the aggregations based on the type of post into two types of files:
+
+1) 'link' for traditional reddit posts.
+2) 'text' posts (aka selftext; which were [introduced in 2008](https://news.ycombinator.com/item?id=20453120)).
 
 ## Misc
 
