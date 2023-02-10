@@ -1,5 +1,7 @@
 # reddit_mining
 
+Digital Humanities sentiment analysis and effective prosody research data samples and data transformation code
+
 ## List of Subreddits
 
 ### Downloads

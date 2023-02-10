@@ -219,7 +219,7 @@ Now we create some plots. The first thing that I found which was interesting is 
 ggplot(SL) +
  aes(x = oldest, y = avg_length_title) +
  geom_line(size = 0.05, colour = "#0C4C8A") +
- labs(x = "Subreddit's first link post", 
+ labs(x = "Subreddit's first link post",
  y = "Avg. Title Length") +
  theme_minimal()
 ```
@@ -229,7 +229,7 @@ Subreddits die every day (or they switch to text-post only):
 ggplot(SL) +
  aes(x = latest, y = avg_length_title) +
  geom_line(size = 0.05, colour = "#0C4C8A") +
- labs(x = "Subreddit's most recent link post", 
+ labs(x = "Subreddit's most recent link post",
  y = "Avg. Title Length") +
  theme_minimal()
 ```
@@ -251,7 +251,7 @@ It also seems that most new subreddits are likely to allow NSFW link-posts.
 ggplot(SL) +
  aes(x = avg_age, y = is_over_18_ratio) +
  geom_line(size = 0.05, colour = "#112446") +
- labs(x = "Average Subreddit Link Posts Age", 
+ labs(x = "Average Subreddit Link Posts Age",
  y = "Over 18 ratio") +
  theme_minimal()
 ```
@@ -310,9 +310,17 @@ fwrite(S, file = 'nsfw_text_subreddits.csv')
 S
 ```
 
-Most surprising subreddits that I discovered while writing this:
+Interesting subreddits that I discovered while writing this:
 
+- /r/lastimages
+- /r/invasivespecies
+- /r/CrazyDictatorIdeas
+- /r/drydockporn
+- /r/ancientpics
+- /r/actualconspiracies
 - /r/WomenFartStories
+- /r/thisisntwhoweare
+- /r/CorporateMisconduct
 
 ## Downloads
 
