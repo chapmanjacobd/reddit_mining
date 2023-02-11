@@ -4,15 +4,33 @@ Digital Humanities sentiment analysis and effective prosody research data sample
 
 ## List of Subreddits
 
+There are over two million subreddits but I've curated a list of the top ~60,000 or so.
+
 ### Downloads
 
 The most interesting files are likely going to be [top_link_subreddits.csv](./top_link_subreddits.csv) and [top_text_subreddits.csv](./top_text_subreddits.csv).
 
 The files starting with long_* and nsfw_* contain the same data -- they are just sorted differently. Check [insights.md](./insights.md) for more details.
 
+I thought I knew most subreddits but there were a few popular ones that I discovered while writing this:
+
+- /r/lastimages
+- /r/invasivespecies
+- /r/CrazyDictatorIdeas
+- /r/drydockporn
+- /r/ancientpics
+- /r/actualconspiracies
+- /r/Eproctophilia (didn't know this was a thing...)
+- /r/BallbustingStories
+- /r/thisisntwhoweare
+- /r/CorporateMisconduct
+- /r/NuclearRevenge
+- /r/redditserials
+- /r/HobbyDrama
+
 ## How was this made?
 
-Today we will look at [subreddits](https://youtu.be/pUncXbXAiV0). The data aggregates loaded here were created by converting pushshift [RS\*.zst](https://files.pushshift.io/reddit/submissions/) data into SQLITE format using the pushshift subcommand of the [xklb](https://github.com/chapmanjacobd/library) python package:
+The data aggregates loaded here were created by converting pushshift [RS\*.zst](https://files.pushshift.io/reddit/submissions/) data into SQLITE format using the pushshift subcommand of the [xklb](https://github.com/chapmanjacobd/library) python package:
 
 ```fish
 wget -e robots=off -r -k -A zst https://files.pushshift.io/reddit/submissions/
@@ -28,7 +46,7 @@ library merge submissions.db psaw/RS*.db
 
 This takes several days per step (and several terabytes of free space) but the end result is a 600 GB SQLITE file. You can save some disk space by downloading the parquet files below.
 
-I split up the data into two parquet files via [sqlite2parquet](https://github.com/asayers/sqlite2parquet/).
+I split up submissions.db into two parquet files via [sqlite2parquet](https://github.com/asayers/sqlite2parquet/).
 
 Query the Parquet files using `octosql`. Depending on the query, `octosql` is usually faster than SQLITE and parquet compresses very well. You may download those parquet files here:
 

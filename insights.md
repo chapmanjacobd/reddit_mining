@@ -931,18 +931,6 @@ S
     ## 20111:         57.08872        0.0000000      0.003048780
     ## 20112:         51.50888        0.0000000      0.006345178
 
-Most surprising subreddits that I discovered while writing this:
-
-- /r/lastimages
-- /r/invasivespecies
-- /r/CrazyDictatorIdeas
-- /r/drydockporn
-- /r/ancientpics
-- /r/actualconspiracies
-- /r/WomenFartStories
-- /r/thisisntwhoweare
-- /r/CorporateMisconduct
-
 
 ## Downloads
 

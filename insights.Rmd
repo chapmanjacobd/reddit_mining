@@ -310,17 +310,6 @@ fwrite(S, file = 'nsfw_text_subreddits.csv')
 S
 ```
 
-Interesting subreddits that I discovered while writing this:
-
-- /r/lastimages
-- /r/invasivespecies
-- /r/CrazyDictatorIdeas
-- /r/drydockporn
-- /r/ancientpics
-- /r/actualconspiracies
-- /r/WomenFartStories
-- /r/thisisntwhoweare
-- /r/CorporateMisconduct
 
 ## Downloads
 
