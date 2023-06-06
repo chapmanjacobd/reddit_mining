@@ -16,12 +16,13 @@ I thought I knew most subreddits but there were a few popular ones that I discov
 
 - /r/lastimages
 - /r/invasivespecies
+- /r/MomForAMinute
 - /r/CrazyDictatorIdeas
 - /r/drydockporn
 - /r/ancientpics
+- /r/coaxedintoasnafu/
 - /r/actualconspiracies
-- /r/Eproctophilia (didn't know this was a thing...)
-- /r/BallbustingStories
+- /r/3FrameMovies
 - /r/thisisntwhoweare
 - /r/CorporateMisconduct
 - /r/NuclearRevenge
