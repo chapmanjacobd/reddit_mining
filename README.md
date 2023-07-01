@@ -2,6 +2,8 @@
 
 Digital Humanities sentiment analysis and effective prosody research data samples and data transformation code
 
+I made a big mistake by lowercasing the URLs in the reddit_links dataset. I recommend you use https://the-eye.eu/redarcs/ instead.
+
 ## List of Subreddits
 
 There are over two million subreddits but I've curated a list of the top ~60,000 or so.
